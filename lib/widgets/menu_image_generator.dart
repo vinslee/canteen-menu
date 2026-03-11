@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
@@ -22,14 +21,12 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
   bool _isSaving = false;
   String? _message;
   late TextEditingController _titleController;
-  
-  static const double _a4Width = 2480.0;
-  static const double _a4Height = 3508.0;
+  String _menuTitle = '本周菜谱';
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: '本周菜谱');
+    _titleController = TextEditingController(text: _menuTitle);
   }
 
   @override
@@ -68,7 +65,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
 
       RenderRepaintBoundary boundary =
           _repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 1.0);
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
       if (byteData == null) {
@@ -103,6 +100,14 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
         _isSaving = false;
       });
     }
+  }
+
+  void _updateTitle() {
+    setState(() {
+      _menuTitle = _titleController.text.trim().isEmpty 
+          ? '本周菜谱' 
+          : _titleController.text.trim();
+    });
   }
 
   @override
@@ -144,26 +149,30 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _titleController,
-                style: const TextStyle(fontSize: 20),
-                decoration: InputDecoration(
-                  labelText: '菜谱标题',
-                  labelStyle: const TextStyle(fontSize: 18),
-                  hintText: '请输入菜谱标题',
-                  hintStyle: TextStyle(fontSize: 18, color: Colors.grey[400]),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  const Text('菜谱标题：', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                  Expanded(
+                    child: TextField(
+                      controller: _titleController,
+                      style: const TextStyle(fontSize: 18),
+                      decoration: InputDecoration(
+                        hintText: '输入菜谱标题',
+                        hintStyle: TextStyle(fontSize: 16, color: Colors.grey[400]),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.check, size: 20),
+                          onPressed: _updateTitle,
+                        ),
+                      ),
+                      onSubmitted: (_) => _updateTitle(),
+                    ),
                   ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () => _titleController.clear(),
-                  ),
-                ),
+                ],
               ),
             ),
             Flexible(
@@ -171,10 +180,9 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
                 child: RepaintBoundary(
                   key: _repaintKey,
                   child: Container(
-                    width: _a4Width,
-                    height: _a4Height,
                     color: Colors.white,
-                    padding: const EdgeInsets.all(80),
+                    width: 595,
+                    padding: const EdgeInsets.all(24),
                     child: _buildMenuContent(),
                   ),
                 ),
@@ -242,32 +250,28 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
   }
 
   Widget _buildMenuContent() {
-    final title = _titleController.text.trim().isEmpty 
-        ? '本周菜谱' 
-        : _titleController.text.trim();
-    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 60),
+          padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
             color: const Color(0xFF4CAF50),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
             child: Text(
-              '【$title】',
+              '【$_menuTitle】',
               style: const TextStyle(
-                fontSize: 96,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: 8,
+                letterSpacing: 2,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 60),
+        const SizedBox(height: 20),
         ...widget.menu.days.map((day) => _buildDayCard(day)),
       ],
     );
@@ -275,27 +279,27 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
 
   Widget _buildDayCard(DayMenuModel day) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 40),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF4CAF50), width: 4),
-        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF4CAF50), width: 1.5),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 32),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: const BoxDecoration(
               color: Color(0xFF4CAF50),
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(20),
+                top: Radius.circular(6),
               ),
             ),
             child: Center(
               child: Text(
                 day.dayName,
                 style: const TextStyle(
-                  fontSize: 72,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -303,13 +307,13 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(40),
+            padding: const EdgeInsets.all(12),
             child: Column(
               children: [
                 _buildMealRow('早餐', day.breakfast),
-                const Divider(height: 40, color: Colors.grey, thickness: 2),
+                const Divider(height: 12, color: Colors.grey),
                 _buildMealRow('午餐', day.lunch),
-                const Divider(height: 40, color: Colors.grey, thickness: 2),
+                const Divider(height: 12, color: Colors.grey),
                 _buildMealRow('晚餐', day.dinner),
               ],
             ),
@@ -324,11 +328,11 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 200,
+          width: 50,
           child: Text(
             title,
             style: const TextStyle(
-              fontSize: 56,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: Color(0xFF4CAF50),
             ),
@@ -341,17 +345,17 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
               Text(
                 meal.name.isEmpty ? '待定' : meal.name,
                 style: TextStyle(
-                  fontSize: 56,
+                  fontSize: 15,
                   color: meal.name.isEmpty ? Colors.grey : Colors.black87,
                 ),
               ),
               if (meal.note.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     '（${meal.note}）',
                     style: TextStyle(
-                      fontSize: 44,
+                      fontSize: 13,
                       color: Colors.grey[600],
                     ),
                   ),

@@ -16,13 +16,13 @@ class CommonDishesPanel extends StatefulWidget {
   });
 
   @override
-  State<CommonDishesPanel> createState() => _CommonDishesPanelState();
+  State<CommonDishesPanel> createState() _commonDishesPanelState();
 }
 
 class _CommonDishesPanelState extends State<CommonDishesPanel> {
   final TextEditingController _newDishController = TextEditingController();
   String _searchText = '';
-  String? _deletingDish;
+  int? _selectedForDelete;
 
   List<String> get _filteredDishes {
     if (_searchText.isEmpty) return widget.dishes;
@@ -36,17 +36,17 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
     if (dish.isEmpty) return;
 
     widget.onAdd(dish);
-    _newDishController.clear();
+    _newDCheck
     setState(() {});
   }
 
-  Future<void> _removeDish(String dish) async {
-    if (_deletingDish != null) return;
-    
+  void _handleDelete(String dish) {
     setState(() {
-      _deletingDish = dish;
+      _selectedForDelete = widget.dishes.indexOf(dish);
     });
+  }
 
+  Future<void> _confirmDelete(String dish) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -67,24 +67,19 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
     );
 
     if (confirmed == true) {
-      await StorageService.instance.removeCommonDish(dish);
       if (widget.onRemove != null) {
         widget.onRemove!(dish);
+      } else {
+        await StorageService.instance.removeCommonDish(dish);
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('已删除"$dish"', style: const TextStyle(fontSize: 18)),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      setState(() {
+        _selectedForDelete = null;
+      });
+    } else {
+      setState(() {
+        _selectedForDelete = null;
+      });
     }
-    
-    setState(() {
-      _deletingDish = null;
-    });
   }
 
   @override
@@ -138,19 +133,28 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
               itemCount: filteredDishes.length,
               itemBuilder: (context, index) {
                 final dish = filteredDishes[index];
-                final isDeleting = _deletingDish == dish;
-                
+                final isSelected = _selectedForDelete != null && 
+                    widget.dishes.indexOf(dish) == _selectedForDelete;
                 return GestureDetector(
-                  onTap: isDeleting ? null : () => widget.onSelect(dish),
-                  onLongPress: isDeleting ? null : () => _removeDish(dish),
+                  onTap: () {
+                    if (isSelected) {
+                      _confirmDelete(dish);
+                    } else {
+                      widget.onSelect(dish);
+                    }
+                  },
+                  onLongPress: () {
+                    _handleDelete(dish);
+                  },
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: isDeleting ? Colors.red.withOpacity(0.1) : Colors.white,
+                      color: isSelected ? Colors.red.withOpacity(0.1) : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isDeleting ? Colors.red : Colors.grey[300]!,
+                        color: isSelected ? Colors.red : Colors.grey[300]!,
+                        width: isSelected ? 2 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -163,8 +167,8 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.restaurant_menu, 
-                          color: isDeleting ? Colors.red : Colors.green[600], 
+                          isSelected ? Icons.delete : Icons.restaurant_menu, 
+                          color: isSelected ? Colors.red : Colors.green[600], 
                           size: 24
                         ),
                         const SizedBox(width: 12),
@@ -174,22 +178,15 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
                             style: TextStyle(
                               fontSize: 20, 
                               fontWeight: FontWeight.w500,
-                              color: isDeleting ? Colors.red : Colors.black87,
+                              color: isSelected ? Colors.red : null,
                             ),
                           ),
                         ),
-                        if (isDeleting)
-                          const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        else
-                          Icon(
-                            Icons.delete_outline, 
-                            color: Colors.grey[400], 
-                            size: 24
-                          ),
+                        Icon(
+                          isSelected ? Icons.check_circle : Icons.add_circle_outline, 
+                          color: isSelected ? Colors.red : Colors.green[600], 
+                          size: 24
+                        ),
                       ],
                     ),
                   ),
@@ -233,7 +230,7 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
           Padding(
             padding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
             child: Text(
-              '提示：点击添加菜品，长按可删除',
+              '提示：点击添加菜品，长按后点击确认删除',
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ),

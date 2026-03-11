@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../models/menu_model.dart';
 import '../services/storage_service.dart';
 import '../widgets/meal_edit_dialog.dart';
@@ -125,60 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _exportToExcel() async {
-    if (_currentMenu == null) return;
-
-    try {
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('需要存储权限才能导出', style: TextStyle(fontSize: 18)),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      final buffer = StringBuffer();
-      buffer.writeln('星期,餐次,菜品,备注');
-      
-      for (final day in _currentMenu!.days) {
-        buffer.writeln('${day.dayName},早餐,${day.breakfast.name},${day.breakfast.note}');
-        buffer.writeln('${day.dayName},午餐,${day.lunch.name},${day.lunch.note}');
-        buffer.writeln('${day.dayName},晚餐,${day.dinner.name},${day.dinner.note}');
-      }
-
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = '菜谱_${DateTime.now().millisecondsSinceEpoch}.csv';
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsString(buffer.toString());
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('已导出到：$fileName', style: const TextStyle(fontSize: 18)),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-
-      await Share.shareXFiles([XFile(file.path)], text: '菜谱文件');
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('导出失败：$e', style: const TextStyle(fontSize: 18)),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   Future<void> _generateImage() async {
     if (_currentMenu == null) return;
 
@@ -292,52 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _commonDishes.insert(0, dish);
           });
         },
-      ),
-    );
-  }
-
-  void _showExportOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              '选择导出格式',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.text_snippet, size: 32, color: Colors.blue),
-              title: const Text('文本格式', style: TextStyle(fontSize: 20)),
-              subtitle: const Text('复制到剪贴板', style: TextStyle(fontSize: 16)),
-              onTap: () {
-                Navigator.pop(context);
-                _copyMenuText();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.table_chart, size: 32, color: Colors.green),
-              title: const Text('Excel格式', style: TextStyle(fontSize: 20)),
-              subtitle: const Text('导出CSV文件', style: TextStyle(fontSize: 16)),
-              onTap: () {
-                Navigator.pop(context);
-                _exportToExcel();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.image, size: 32, color: Colors.orange),
-              title: const Text('图片格式', style: TextStyle(fontSize: 20)),
-              subtitle: const Text('保存到相册', style: TextStyle(fontSize: 16)),
-              onTap: () {
-                Navigator.pop(context);
-                _generateImage();
-              },
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -569,9 +466,9 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: _showExportOptions,
-                icon: const Icon(Icons.share, size: 28),
-                label: const Text('导出', style: TextStyle(fontSize: 20)),
+                onPressed: _copyMenuText,
+                icon: const Icon(Icons.copy, size: 28),
+                label: const Text('复制文本', style: TextStyle(fontSize: 20)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
