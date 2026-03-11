@@ -18,11 +18,3 @@ dependencies:
 
 flutter:
   uses-material-design: true
-
-  fonts:
-    - family: CustomFont
-      fonts:
-        - asset: assets/fonts/
-
-  assets:
-    - assets/

@@ -23,7 +23,6 @@ class CanteenMenuApp extends StatelessWidget {
           seedColor: const Color(0xFF4CAF50),
           brightness: Brightness.light,
         ),
-        fontFamily: 'PingFang SC',
         appBarTheme: const AppBarTheme(
           centerTitle: true,
           elevation: 0,
