@@ -5,12 +5,14 @@ class CommonDishesPanel extends StatefulWidget {
   final List<String> dishes;
   final Function(String) onSelect;
   final Function(String) onAdd;
+  final Function(String)? onRemove;
 
   const CommonDishesPanel({
     super.key,
     required this.dishes,
     required this.onSelect,
     required this.onAdd,
+    this.onRemove,
   });
 
   @override
@@ -20,6 +22,7 @@ class CommonDishesPanel extends StatefulWidget {
 class _CommonDishesPanelState extends State<CommonDishesPanel> {
   final TextEditingController _newDishController = TextEditingController();
   String _searchText = '';
+  String? _deletingDish;
 
   List<String> get _filteredDishes {
     if (_searchText.isEmpty) return widget.dishes;
@@ -38,6 +41,12 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
   }
 
   Future<void> _removeDish(String dish) async {
+    if (_deletingDish != null) return;
+    
+    setState(() {
+      _deletingDish = dish;
+    });
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -59,8 +68,23 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
 
     if (confirmed == true) {
       await StorageService.instance.removeCommonDish(dish);
-      setState(() {});
+      if (widget.onRemove != null) {
+        widget.onRemove!(dish);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('已删除"$dish"', style: const TextStyle(fontSize: 18)),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
+    
+    setState(() {
+      _deletingDish = null;
+    });
   }
 
   @override
@@ -114,16 +138,20 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
               itemCount: filteredDishes.length,
               itemBuilder: (context, index) {
                 final dish = filteredDishes[index];
+                final isDeleting = _deletingDish == dish;
+                
                 return GestureDetector(
-                  onTap: () => widget.onSelect(dish),
-                  onLongPress: () => _removeDish(dish),
+                  onTap: isDeleting ? null : () => widget.onSelect(dish),
+                  onLongPress: isDeleting ? null : () => _removeDish(dish),
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDeleting ? Colors.red.withOpacity(0.1) : Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(
+                        color: isDeleting ? Colors.red : Colors.grey[300]!,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.grey.withOpacity(0.1),
@@ -134,15 +162,34 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.restaurant_menu, color: Colors.green[600], size: 24),
+                        Icon(
+                          Icons.restaurant_menu, 
+                          color: isDeleting ? Colors.red : Colors.green[600], 
+                          size: 24
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             dish,
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: 20, 
+                              fontWeight: FontWeight.w500,
+                              color: isDeleting ? Colors.red : Colors.black87,
+                            ),
                           ),
                         ),
-                        Icon(Icons.add_circle_outline, color: Colors.green[600], size: 24),
+                        if (isDeleting)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else
+                          Icon(
+                            Icons.delete_outline, 
+                            color: Colors.grey[400], 
+                            size: 24
+                          ),
                       ],
                     ),
                   ),
