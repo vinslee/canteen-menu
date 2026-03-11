@@ -1,0 +1,66 @@
+name: Build Flutter APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+        channel: 'stable'
+
+    - name: Get dependencies
+      run: flutter pub get
+      working-directory: canteen_menu
+
+    - name: Build APK
+      run: flutter build apk --release
+      working-directory: canteen_menu
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: canteen-menu-apk
+        path: canteen_menu/build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+
+    - name: Create Release
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: 食堂菜谱 v1.0.${{ github.run_number }}
+        files: canteen_menu/build/app/outputs/flutter-apk/app-release.apk
+        body: |
+          ## 食堂菜谱管理应用
+          
+          ### 功能特点
+          - 显示周一到周日三餐菜谱
+          - 常用菜品库快速填入
+          - 一键复制菜谱文本
+          - 一键生成图片保存相册
+          - 复制上周菜谱
+          - 本地存储，无需联网
+          
+          ### 下载安装
+          下载 app-release.apk 文件，传输到安卓手机安装即可使用。
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
