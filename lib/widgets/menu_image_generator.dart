@@ -28,10 +28,20 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
     });
 
     try {
-      final status = await Permission.storage.request();
+      var status = await Permission.storage.status;
+      if (!status.isGranted) {
+        status = await Permission.storage.request();
+      }
+      if (!status.isGranted) {
+        status = await Permission.photos.request();
+      }
+      if (!status.isGranted) {
+        status = await Permission.manageExternalStorage.request();
+      }
+      
       if (!status.isGranted) {
         setState(() {
-          _message = '需要存储权限才能保存图片';
+          _message = '需要存储权限才能保存图片，请在设置中开启权限';
           _isSaving = false;
         });
         return;
@@ -53,16 +63,10 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
       }
 
       final buffer = byteData.buffer.asUint8List();
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = '菜谱_${DateTime.now().millisecondsSinceEpoch}.png';
-      final filePath = '${directory.path}/$fileName';
-      final file = File(filePath);
-      await file.writeAsBytes(buffer);
-
       final result = await ImageGallerySaver.saveImage(
         buffer,
         quality: 100,
-        name: '菜谱_${DateTime.now().millisecondsSinceEpoch}',
+        name: '胡老三菜谱_${DateTime.now().millisecondsSinceEpoch}',
       );
 
       if (result['isSuccess'] == true) {
@@ -109,7 +113,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
                     child: Text(
                       '菜谱预览',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -128,7 +132,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
                   key: _repaintKey,
                   child: Container(
                     color: Colors.white,
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     child: _buildMenuContent(),
                   ),
                 ),
@@ -137,7 +141,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
             if (_message != null)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 color: _message!.contains('成功') || _message!.contains('已保存')
                     ? Colors.green.withOpacity(0.1)
                     : Colors.red.withOpacity(0.1),
@@ -200,16 +204,16 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 24),
           decoration: BoxDecoration(
             color: const Color(0xFF4CAF50),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Center(
             child: Text(
-              '【本周菜谱】',
+              '【胡老三菜谱】',
               style: TextStyle(
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
                 letterSpacing: 4,
@@ -234,7 +238,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: const BoxDecoration(
               color: Color(0xFF4CAF50),
               borderRadius: BorderRadius.vertical(
@@ -245,7 +249,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
               child: Text(
                 day.dayName,
                 style: const TextStyle(
-                  fontSize: 26,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -257,9 +261,9 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
             child: Column(
               children: [
                 _buildMealRow('🌅 早餐', day.breakfast),
-                const Divider(height: 24),
+                const Divider(height: 20, color: Colors.grey),
                 _buildMealRow('☀️ 午餐', day.lunch),
-                const Divider(height: 24),
+                const Divider(height: 20, color: Colors.grey),
                 _buildMealRow('🌙 晚餐', day.dinner),
               ],
             ),
@@ -278,7 +282,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
           child: Text(
             title,
             style: const TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Color(0xFF4CAF50),
             ),
@@ -291,7 +295,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
               Text(
                 meal.name.isEmpty ? '待定' : meal.name,
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 22,
                   color: meal.name.isEmpty ? Colors.grey : Colors.black87,
                 ),
               ),
@@ -301,7 +305,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
                   child: Text(
                     '（${meal.note}）',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       color: Colors.grey[600],
                     ),
                   ),

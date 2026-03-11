@@ -41,17 +41,17 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除菜品', style: TextStyle(fontSize: 22)),
-        content: Text('确定要删除"$dish"吗？', style: const TextStyle(fontSize: 18)),
+        title: const Text('删除菜品', style: TextStyle(fontSize: 24)),
+        content: Text('确定要删除"$dish"吗？', style: const TextStyle(fontSize: 20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消', style: TextStyle(fontSize: 18)),
+            child: const Text('取消', style: TextStyle(fontSize: 20)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('删除', style: TextStyle(fontSize: 18)),
+            child: const Text('删除', style: TextStyle(fontSize: 20)),
           ),
         ],
       ),
@@ -90,13 +90,14 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
                   _searchText = value;
                 });
               },
+              style: const TextStyle(fontSize: 18),
               decoration: InputDecoration(
                 hintText: '搜索菜品',
-                hintStyle: TextStyle(fontSize: 16, color: Colors.grey[400]),
-                prefixIcon: const Icon(Icons.search, size: 24),
+                hintStyle: TextStyle(fontSize: 18, color: Colors.grey[400]),
+                prefixIcon: const Icon(Icons.search, size: 28),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
@@ -106,16 +107,10 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
           ),
           const Divider(height: 1),
           Container(
-            constraints: const BoxConstraints(maxHeight: 250),
-            child: GridView.builder(
+            constraints: const BoxConstraints(maxHeight: 300),
+            child: ListView.builder(
               shrinkWrap: true,
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 2.5,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               itemCount: filteredDishes.length,
               itemBuilder: (context, index) {
                 final dish = filteredDishes[index];
@@ -123,18 +118,32 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
                   onTap: () => widget.onSelect(dish),
                   onLongPress: () => _removeDish(dish),
                   child: Container(
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.grey[300]!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      dish,
-                      style: const TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      children: [
+                        Icon(Icons.restaurant_menu, color: Colors.green[600], size: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            dish,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Icon(Icons.add_circle_outline, color: Colors.green[600], size: 24),
+                      ],
                     ),
                   ),
                 );
@@ -149,12 +158,13 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
                 Expanded(
                   child: TextField(
                     controller: _newDishController,
+                    style: const TextStyle(fontSize: 18),
                     decoration: InputDecoration(
                       hintText: '添加新菜品',
-                      hintStyle: TextStyle(fontSize: 16, color: Colors.grey[400]),
+                      hintStyle: TextStyle(fontSize: 18, color: Colors.grey[400]),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide.none,
@@ -166,9 +176,9 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
                 ElevatedButton(
                   onPressed: _addNewDish,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   ),
-                  child: const Text('添加', style: TextStyle(fontSize: 16)),
+                  child: const Text('添加', style: TextStyle(fontSize: 18)),
                 ),
               ],
             ),
@@ -176,8 +186,8 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
           Padding(
             padding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
             child: Text(
-              '提示：点击选择菜品，长按可删除',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              '提示：点击添加菜品，长按可删除',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ),
         ],
