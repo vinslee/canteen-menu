@@ -16,7 +16,7 @@ class CommonDishesPanel extends StatefulWidget {
   });
 
   @override
-  State<CommonDishesPanel> createState() _commonDishesPanelState();
+  State<CommonDishesPanel> createState() => _CommonDishesPanelState();
 }
 
 class _CommonDishesPanelState extends State<CommonDishesPanel> {
@@ -36,7 +36,7 @@ class _CommonDishesPanelState extends State<CommonDishesPanel> {
     if (dish.isEmpty) return;
 
     widget.onAdd(dish);
-    _newDCheck
+    _newDishController.clear();
     setState(() {});
   }
 
