@@ -29,17 +29,15 @@ jobs:
 
     - name: Get dependencies
       run: flutter pub get
-      working-directory: canteen_menu
 
     - name: Build APK
       run: flutter build apk --release
-      working-directory: canteen_menu
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: canteen-menu-apk
-        path: canteen_menu/build/app/outputs/flutter-apk/app-release.apk
+        path: build/app/outputs/flutter-apk/app-release.apk
         retention-days: 30
 
     - name: Create Release
@@ -48,7 +46,7 @@ jobs:
       with:
         tag_name: v1.0.${{ github.run_number }}
         name: 食堂菜谱 v1.0.${{ github.run_number }}
-        files: canteen_menu/build/app/outputs/flutter-apk/app-release.apk
+        files: build/app/outputs/flutter-apk/app-release.apk
         body: |
           ## 食堂菜谱管理应用
           
