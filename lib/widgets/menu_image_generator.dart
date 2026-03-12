@@ -7,6 +7,8 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/menu_model.dart';
 
+/// 菜谱图片生成器组件 - 宽幅排版模式
+/// 采用16:9宽幅比例，7天菜谱横向网格布局
 class MenuImageGenerator extends StatefulWidget {
   final WeekMenuModel menu;
 
@@ -23,6 +25,10 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
   late TextEditingController _titleController;
   String _menuTitle = '本周菜谱';
 
+  /// 宽幅图片尺寸配置 (16:9比例)
+  static const double _imageWidth = 1280.0;
+  static const double _imageHeight = 720.0;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +41,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
     super.dispose();
   }
 
+  /// 保存图片到相册
   Future<void> _saveImage() async {
     setState(() {
       _isSaving = true;
@@ -52,7 +59,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
       if (!status.isGranted) {
         status = await Permission.manageExternalStorage.request();
       }
-      
+
       if (!status.isGranted) {
         setState(() {
           _message = '需要存储权限才能保存图片，请在设置中开启权限';
@@ -102,10 +109,11 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
     }
   }
 
+  /// 更新菜谱标题
   void _updateTitle() {
     setState(() {
-      _menuTitle = _titleController.text.trim().isEmpty 
-          ? '本周菜谱' 
+      _menuTitle = _titleController.text.trim().isEmpty
+          ? '本周菜谱'
           : _titleController.text.trim();
     });
   }
@@ -133,7 +141,7 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
                 children: [
                   const Expanded(
                     child: Text(
-                      '菜谱预览',
+                      '菜谱预览（宽幅模式）',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -181,9 +189,10 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
                   key: _repaintKey,
                   child: Container(
                     color: Colors.white,
-                    width: 595,
-                    padding: const EdgeInsets.all(24),
-                    child: _buildMenuContent(),
+                    width: _imageWidth,
+                    height: _imageHeight,
+                    padding: const EdgeInsets.all(20),
+                    child: _buildWideMenuContent(),
                   ),
                 ),
               ),
@@ -249,73 +258,120 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
     );
   }
 
-  Widget _buildMenuContent() {
+  /// 构建宽幅菜谱内容 - 横向网格布局
+  Widget _buildWideMenuContent() {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF4CAF50),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              '【$_menuTitle】',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 2,
-              ),
-            ),
-          ),
+        _buildTitle(),
+        const SizedBox(height: 12),
+        Expanded(
+          child: _buildDaysGrid(),
         ),
-        const SizedBox(height: 20),
-        ...widget.menu.days.map((day) => _buildDayCard(day)),
       ],
     );
   }
 
+  /// 构建标题栏
+  Widget _buildTitle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4CAF50),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Center(
+        child: Text(
+          '【$_menuTitle】',
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 4,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 构建7天网格布局 - 第一行4天，第二行3天
+  Widget _buildDaysGrid() {
+    final days = widget.menu.days;
+    final firstRowDays = days.take(4).toList();
+    final secondRowDays = days.skip(4).toList();
+
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: firstRowDays.map((day) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: _buildDayCard(day),
+              ),
+            )).toList(),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Row(
+            children: [
+              ...secondRowDays.map((day) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _buildDayCard(day),
+                ),
+              )).toList(),
+              Expanded(
+                flex: secondRowDays.length == 3 ? 0 : 1,
+                child: const SizedBox(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建单天卡片
   Widget _buildDayCard(DayMenuModel day) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF4CAF50), width: 1.5),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: const BoxDecoration(
               color: Color(0xFF4CAF50),
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(6),
+                top: Radius.circular(4),
               ),
             ),
             child: Center(
               child: Text(
                 day.dayName,
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                _buildMealRow('早餐', day.breakfast),
-                const Divider(height: 12, color: Colors.grey),
-                _buildMealRow('午餐', day.lunch),
-                const Divider(height: 12, color: Colors.grey),
-                _buildMealRow('晚餐', day.dinner),
-              ],
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMealItem('早', day.breakfast),
+                  _buildMealItem('午', day.lunch),
+                  _buildMealItem('晚', day.dinner),
+                ],
+              ),
             ),
           ),
         ],
@@ -323,21 +379,30 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
     );
   }
 
-  Widget _buildMealRow(String title, MealModel meal) {
+  /// 构建餐次项目 - 紧凑横向布局
+  Widget _buildMealItem(String title, MealModel meal) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 50,
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF4CAF50),
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: const Color(0xFF4CAF50).withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF4CAF50),
+              ),
             ),
           ),
         ),
+        const SizedBox(width: 4),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,20 +410,21 @@ class _MenuImageGeneratorState extends State<MenuImageGenerator> {
               Text(
                 meal.name.isEmpty ? '待定' : meal.name,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: meal.name.isEmpty ? Colors.grey : Colors.black87,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               if (meal.note.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    '（${meal.note}）',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                Text(
+                  '(${meal.note})',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[600],
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
             ],
           ),
